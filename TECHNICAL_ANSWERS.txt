@@ -1,0 +1,111 @@
+JAWABAN TECHNICAL TEST FULLSTACK DEVELOPER
+(Referensi Implementasi: Folder ticket-booking-system)
+
+1. MICROSERVICES ARCHITECTURE
+---------------------------
+Desain Implementasi Project Ini:
+Sistem dibangun dengan arsitektur Microservices menggunakan Node.js (Express) dalam struktur Monorepo.
+
+Service yang Kami Buat:
+- Gateway Service (Port 3000): Bertindak sebagai entry point/proxy untuk product service.
+  Path: services/gateway/index.js
+- User Service (Port 3001): Menangani Authentication (Login/Register) dengan JWT & BCrypt.
+  Path: services/user-service/index.js
+- Booking Service (Port 3002): Menangani logika pemesanan dan caching data konser.
+  Path: services/booking-service/index.js
+- Payment Service (Port 3003): Simulasi pemrosesan pembayaran.
+  Path: services/payment-service/index.js
+- Frontend Client (Port 5173): React.js + Vite.
+
+Komunikasi Antar Service:
+Kami menggunakan komunikasi HTTP REST (Synchronous) yang di-orkestrasi oleh Frontend (client/src/services/).
+Contoh Flow di Codebase:
+1. User Login -> Client memanggil `authService.login` (User Service :3001).
+2. Lihat Produk -> Client memanggil `productService.getPopularConcerts` (Gateway :3000 -> Booking Service :3002).
+3. Booking -> Client memanggil `bookingService.createBooking` (Booking Service :3002).
+
+2. SQL & INDEX OPTIMIZATION
+---------------------------
+(Catatan: Project ini menggunakan Mock Data/In-Memory, namun berikut adalah solusi untuk skenario SQL 10 juta baris)
+
+Query:
+SELECT user_id, SUM(total_amount) as total_spending
+FROM orders
+WHERE created_at >= NOW() - INTERVAL '30 days'
+GROUP BY user_id;
+
+Optimasi:
+Kami akan membuat Composite Index pada (created_at, user_id, total_amount).
+- Ini memungkinkan database melakukan "Index Only Scan", mengambil data langsung dari index tanpa membaca tabel fisik, mengurangi I/O secara drastis.
+
+3. FRONTEND OPTIMIZATION
+------------------------
+Optimasi yang Telah Diterapkan di Folder `client/`:
+
+1. Code Splitting & Lazy Loading:
+   File: client/src/App.jsx
+   Implementasi: Menggunakan `React.lazy(() => import(...))` untuk page Login, Register, dan Dashboard. Ini memecah bundle JS agar loading awal lebih cepat.
+
+2. Service Layer Architecture:
+   Folder: client/src/services/
+   Implementasi: Memisahkan logic API (authService.js, productService.js) dari komponen UI. Ini membuat komponen `Dashboard.jsx` lebih ringan dan logic bisa di-reuse.
+
+3. Pagination (Client-Side Logic & Server Support):
+   File: client/src/pages/Dashboard.jsx & services/booking-service/index.js
+   Implementasi: Backend mendukung parameter `?page=1&limit=5`. Frontend hanya me-render data sesuai halaman aktif, tidak meload seluruh data sekaligus.
+
+4. CI/CD DEPLOYMENT STRATEGY
+----------------------------
+Workflow Ideal untuk Project Ini:
+
+1. Local Development:
+   Developer menjalankan `npm run install:all` dan `npm start` (menggunakan concurrently) untuk simulasi sistem.
+2. Build Stage:
+   Membangun Docker Image untuk setiap service (User, Booking, Payment, Gateway).
+   Command: `docker build -t user-service ./services/user-service`
+3. Testing:
+   Menjalankan Unit Test (Jest) pada logika service.
+4. Deployment:
+   Deploy container ke Kubernetes Cluster (misal: AWS EKS).
+   Client (Frontend) di-build (`npm run build`) dan di-deploy ke S3/CloudFront atau Nginx.
+
+5. CODE REVIEW & DEBUGGING
+--------------------------
+Isu pada kode soal (Express.js):
+1. SQL Injection: `id = " + userId` sangat berbahaya.
+2. Unhandled Promise Rejection: Tidak ada try-catch.
+3. Logical Error: Tidak mengecek availability user (404).
+
+Perbaikan (Seperti Pattern di `services/user-service/index.js` kami):
+- Menggunakan `try-catch` block.
+- Menggunakan parameterized query (jika pakai DB SQL).
+- Validasi input `req.params.id`.
+
+6. API SECURITY
+---------------
+Implementasi Keamanan pada Project (`services/user-service/index.js`):
+
+1. Rate Limiting:
+   Kami menggunakan `express-rate-limit` untuk membatasi request spam (Max 100 req/15min).
+2. Input Validation:
+   Kami menggunakan library `zod` untuk memvalidasi format email dan password saat Register/Login.
+3. Secure Headers:
+   Kami menggunakan middleware `helmet` untuk proteksi header HTTP dasar.
+4. Password Hashing:
+   Kami tidak menyimpan password plain text, melainkan di-hash menggunakan `bcryptjs`.
+5. CORS Protection:
+   User Service membatasi origin hanya dari Frontend Client.
+
+7. EFFICIENT SERVER HIT HANDLING
+--------------------------------
+Implementasi pada Project (`services/booking-service/index.js`):
+
+Masalah: Endpoint `/api/products/popular` traffic tinggi.
+Solusi Kami: Redis Cache-Aside Pattern.
+
+Implementasi Code:
+1. Cek Redis: `await redisClient.get(cacheKey)`
+2. Jika ada (Hit): Return JSON langsung. (Response Time < 5ms).
+3. Jika tidak ada (Miss): Ambil dari data asli -> Set ke Redis dengan Expiry 60 detik -> Return data.
+
+Benefit: Mengurangi beban komputasi backend secara signifikan karena request berulang dilayani oleh Memory Cache.

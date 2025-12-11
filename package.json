@@ -1,0 +1,16 @@
+{
+  "name": "ticket-booking-system",
+  "version": "1.0.0",
+  "scripts": {
+    "install:all": "npm install && cd services/gateway && npm install && cd ../user-service && npm install && cd ../booking-service && npm install && cd ../payment-service && npm install && cd ../../client && npm install",
+    "start": "concurrently \"npm run start:gateway\" \"npm run start:user\" \"npm run start:booking\" \"npm run start:payment\" \"npm run start:client\"",
+    "start:gateway": "cd services/gateway && npm start",
+    "start:user": "cd services/user-service && npm start",
+    "start:booking": "cd services/booking-service && npm start",
+    "start:payment": "cd services/payment-service && npm start",
+    "start:client": "cd client && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
