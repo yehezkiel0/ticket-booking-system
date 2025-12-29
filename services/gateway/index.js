@@ -29,7 +29,7 @@ for (const [route, target] of Object.entries(routes)) {
       target,
       changeOrigin: true,
       pathRewrite: {
-        [`^${route}`]: route, // Keep the path
+        [`^${route}`]: route,
       },
     })
   );

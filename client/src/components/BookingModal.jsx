@@ -6,6 +6,7 @@ import { paymentService } from "../services/paymentService";
 const BookingModal = ({ concert, onClose }) => {
   const [step, setStep] = useState(1);
   const [bookingId, setBookingId] = useState(null);
+  const [totalPrice, setTotalPrice] = useState(0);
   const [paymentStatus, setPaymentStatus] = useState("");
   const [error, setError] = useState("");
 
@@ -15,8 +16,10 @@ const BookingModal = ({ concert, onClose }) => {
 
     bookingService
       .createBooking(concert.id, 1)
-      .then((data) => {
-        setBookingId(data.bookingId);
+      .then((response) => {
+        const booking = response.booking || response;
+        setBookingId(booking.bookingId);
+        setTotalPrice(booking.totalPrice);
         setStep(3);
       })
       .catch((err) => {
@@ -31,7 +34,7 @@ const BookingModal = ({ concert, onClose }) => {
     setError("");
 
     paymentService
-      .processPayment(bookingId, concert.price)
+      .processPayment(bookingId, totalPrice)
       .then(() => {
         setPaymentStatus("Paid");
         setStep(4);
@@ -103,7 +106,7 @@ const BookingModal = ({ concert, onClose }) => {
               <div className="flex justify-between items-center bg-gray-50 p-3 rounded mb-4">
                 <span>Total Amount:</span>
                 <span className="font-bold text-xl text-blue-600">
-                  Rp {concert.price.toLocaleString()}
+                  Rp {totalPrice.toLocaleString()}
                 </span>
               </div>
               <button

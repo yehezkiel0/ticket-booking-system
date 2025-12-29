@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:3003/api/payments";
+const API_URL = "http://localhost:3000/api/payments";
 
 export const paymentService = {
   processPayment: async (bookingId, amount) => {

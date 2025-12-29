@@ -25,7 +25,7 @@ const users = [
     id: 1,
     name: "Admin User",
     email: "admin@gmail.com",
-    password: "$2a$10$0q9hh1hwZhsZ/BmY9eBtxuPs1buOQaNclEpMz4wUNRWuOO0iXEgym",
+    password: "$2a$10$0q9hh1hwZhsZ/BmY9eBtxuPs1buOQaNclEpMz4wUNRWuOO0iXEgym", // hashed "admin1234"
   },
 ];
 
@@ -53,7 +53,6 @@ app.post("/api/users/register", async (req, res) => {
 
   const { name, email, password } = validation.data;
 
-  // Check if exists
   if (users.find((u) => u.email === email)) {
     return res.status(400).json({ error: "User already exists" });
   }

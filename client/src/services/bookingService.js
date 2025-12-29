@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:3002/api/bookings";
+const API_URL = "http://localhost:3000/api/bookings";
 
 export const bookingService = {
   createBooking: async (eventId, seatCount) => {
