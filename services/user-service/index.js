@@ -4,9 +4,11 @@ const rateLimit = require("express-rate-limit");
 const cors = require("cors");
 const { z } = require("zod");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-payment-2024";
 
 app.use(helmet());
 app.use(cors());
@@ -92,10 +94,18 @@ app.post("/api/users/login", async (req, res) => {
     return res.status(401).json({ error: "Invalid credentials" });
   }
 
+  // Generate JWT Token
+  const token = jwt.sign(
+    { id: user.id, email: user.email, name: user.name },
+    JWT_SECRET,
+    { expiresIn: "24h" }
+  );
+
   const { password: _, ...userWithoutPassword } = user;
   res.json({
     message: "Login successful",
     user: userWithoutPassword,
+    token: token,
   });
 });
 

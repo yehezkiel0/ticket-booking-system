@@ -8,12 +8,10 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 
-// Health Check
 app.get("/", (req, res) => {
   res.send("API Gateway is running");
 });
 
-// Proxy Rules
 const routes = {
   "/api/users": "http://localhost:3001",
   "/api/auth": "http://localhost:3001",
@@ -30,6 +28,11 @@ for (const [route, target] of Object.entries(routes)) {
       changeOrigin: true,
       pathRewrite: {
         [`^${route}`]: route,
+      },
+      onProxyReq: (proxyReq, req, res) => {
+        if (req.headers.authorization) {
+          proxyReq.setHeader("Authorization", req.headers.authorization);
+        }
       },
     })
   );

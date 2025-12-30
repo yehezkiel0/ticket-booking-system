@@ -120,7 +120,6 @@ const BookingModal = ({ concert, onClose }) => {
 
           {step === 4 && (
             <div className="text-center py-4">
-              <div className="text-5xl mb-4">🎉</div>
               <h3 className="text-xl font-bold text-gray-800 mb-2">Success!</h3>
               <p className="text-gray-600 mb-6">
                 Your ticket for <strong>{concert.name}</strong> has been

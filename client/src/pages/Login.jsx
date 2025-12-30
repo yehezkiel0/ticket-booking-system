@@ -13,8 +13,10 @@ const Login = () => {
     try {
       const data = await authService.login(email, password);
 
-      if (data.user) {
+      if (data.user && data.token) {
+        // Simpan user data dan JWT token
         localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("token", data.token);
         navigate("/dashboard", { replace: true });
       } else {
         alert(data.error || "Authentication failed");

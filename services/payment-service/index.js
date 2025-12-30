@@ -1,13 +1,39 @@
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
+const jwt = require("jsonwebtoken");
 
 const app = express();
 const PORT = process.env.PORT || 3003;
 const GATEWAY_URL = "http://localhost:3000";
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-payment-2024";
 
 app.use(cors());
 app.use(express.json());
+
+// JWT Middleware untuk Autentikasi
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: "Access token required",
+    });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({
+        success: false,
+        message: "Invalid or expired token",
+      });
+    }
+    req.user = user;
+    next();
+  });
+};
 
 // Payment Storage (in-memory)
 const payments = [];
@@ -52,8 +78,8 @@ const processPaymentAsync = async (paymentId, bookingId, amount) => {
   });
 };
 
-// POST /api/payments - Process Payment
-app.post("/api/payments", async (req, res) => {
+// POST /api/payments - Process Payment (Protected)
+app.post("/api/payments", authenticateToken, async (req, res) => {
   const { bookingId, amount } = req.body;
 
   // Validasi Input
@@ -150,8 +176,8 @@ app.post("/api/payments", async (req, res) => {
     });
 });
 
-// GET /api/payments/:paymentId - Check Payment Status
-app.get("/api/payments/:paymentId", (req, res) => {
+// GET /api/payments/:paymentId - Check Payment Status (Protected)
+app.get("/api/payments/:paymentId", authenticateToken, (req, res) => {
   const { paymentId } = req.params;
   const payment = payments.find((p) => p.paymentId === paymentId);
 
@@ -168,8 +194,8 @@ app.get("/api/payments/:paymentId", (req, res) => {
   });
 });
 
-// GET /api/payments - List All Payments
-app.get("/api/payments", (req, res) => {
+// GET /api/payments - List All Payments (Protected)
+app.get("/api/payments", authenticateToken, (req, res) => {
   res.json({
     success: true,
     total: payments.length,
